@@ -19,7 +19,7 @@ export default function EditCategoryModal({ visible, category, onClose, onSucces
 
   useEffect(() => {
     if (category && visible) {
-      setCategoryName(category.name)
+      setCategoryName(category.nome)
     }
   }, [category, visible])
 
@@ -44,7 +44,7 @@ export default function EditCategoryModal({ visible, category, onClose, onSucces
   }
 
   const handleDelete = () => {
-    Alert.alert("Deletar Categoria", `Tem certeza que deseja deletar "${category?.name}"?`, [
+    Alert.alert("Deletar Categoria", `Tem certeza que deseja deletar "${category?.nome}"?`, [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Deletar",

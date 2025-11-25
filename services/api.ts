@@ -1,7 +1,7 @@
 import { getToken } from "../storage/tokenStorage"
 
 const BASE_URL = "https://voxia-api.onrender.com"
-const TIMEOUT = 10000
+const TIMEOUT = 30000
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
   try {

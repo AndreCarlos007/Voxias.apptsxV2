@@ -15,18 +15,18 @@ export type CategoriaType = {
 // API Models
 export interface ApiCard {
   id: string
-  name: string
-  imageUrl: string
+  nome: string
+  imagemUrl: string
   audioUrl?: string
-  playCount?: number
-  createdAt?: string
-  categoryId?: string
+  vezes?: number
+  criadoEm?: string
+  categoriaId?: string
 }
 
 export interface ApiCategory {
   id: string
-  name: string
-  imageUrl?: string
+  nome: string
+  imagemUrl?: string
 }
 
 export interface UserProfile {

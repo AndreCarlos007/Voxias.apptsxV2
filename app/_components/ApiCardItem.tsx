@@ -12,12 +12,16 @@ type Props = {
 export default function ApiCardItem({ card, onPress }: Props) {
   const [imageLoading, setImageLoading] = useState(true)
 
+  const imageUrl = card.imagemUrl?.startsWith("http")
+    ? card.imagemUrl
+    : `https://voxia-api.onrender.com${card.imagemUrl}`
+
   return (
-    <TouchableOpacity onPress={onPress} className="items-center mr-4">
+    <TouchableOpacity onPress={onPress} className="items-center">
       <View className="w-28 h-28 rounded-full bg-secondary justify-center items-center overflow-hidden">
         {imageLoading && <ActivityIndicator size="large" color="#1B1B1B" style={{ position: "absolute" }} />}
         <Image
-          source={{ uri: card.imageUrl }}
+          source={{ uri: imageUrl }}
           className="w-20 h-20"
           resizeMode="contain"
           onLoadEnd={() => setImageLoading(false)}
@@ -25,7 +29,7 @@ export default function ApiCardItem({ card, onPress }: Props) {
         />
       </View>
       <Text className="text-white text-center font-spaceBold mt-2 w-28" numberOfLines={2}>
-        {card.name}
+        {card.nome}
       </Text>
     </TouchableOpacity>
   )

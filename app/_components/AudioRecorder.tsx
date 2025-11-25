@@ -8,13 +8,14 @@ import { Audio } from "expo-av"
 type Props = {
   visible: boolean
   onClose: () => void
-  onAudioRecorded: (blob: Blob) => void
+  onAudioRecorded: (uri: string) => void
 }
 
 export default function AudioRecorder({ visible, onClose, onAudioRecorded }: Props) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [recordedUri, setRecordedUri] = useState<string | null>(null)
   const timerRef = useRef<NodeJS.Timeout | number | null>(null)
 
   const startRecording = async () => {
@@ -63,10 +64,7 @@ export default function AudioRecorder({ visible, onClose, onAudioRecorded }: Pro
       console.log("[v0] Recording stopped, URI:", uri)
 
       if (uri) {
-        const response = await fetch(uri)
-        const blob = await response.blob()
-
-        onAudioRecorded(blob)
+        setRecordedUri(uri)
       }
     } catch (error) {
       console.error("Error stopping recording:", error)
@@ -74,14 +72,26 @@ export default function AudioRecorder({ visible, onClose, onAudioRecorded }: Pro
     }
   }
 
-  const cancelRecording = async () => {
-    if (recording) {
-      await recording.stopAndUnloadAsync()
-      if (timerRef.current) clearInterval(timerRef.current)
-      setRecording(null)
-      setIsRecording(false)
-      setRecordingTime(0)
+  const confirmRecording = () => {
+    if (recordedUri) {
+      onAudioRecorded(recordedUri)
+      resetRecorder()
     }
+  }
+
+  const resetRecorder = () => {
+    setRecording(null)
+    setIsRecording(false)
+    setRecordingTime(0)
+    setRecordedUri(null)
+    if (timerRef.current) clearInterval(timerRef.current as NodeJS.Timeout)
+  }
+
+  const cancelRecording = async () => {
+    if (recording && isRecording) {
+      await recording.stopAndUnloadAsync()
+    }
+    resetRecorder()
     onClose()
   }
 
@@ -100,12 +110,16 @@ export default function AudioRecorder({ visible, onClose, onAudioRecorded }: Pro
 
           <TouchableOpacity
             onPress={isRecording ? stopRecording : startRecording}
-            disabled={!isRecording && recordingTime > 0}
+            disabled={recordedUri !== null}
             className={`w-20 h-20 rounded-full justify-center items-center mb-6 ${
-              isRecording ? "bg-red-500" : "bg-secondary"
+              isRecording ? "bg-red-500" : recordedUri ? "bg-green-500" : "bg-secondary"
             }`}
           >
-            <Ionicons name={isRecording ? "stop" : "mic"} size={40} color={isRecording ? "white" : "#1B1B1B"} />
+            <Ionicons
+              name={isRecording ? "stop" : recordedUri ? "checkmark" : "mic"}
+              size={40}
+              color={isRecording || recordedUri ? "white" : "#1B1B1B"}
+            />
           </TouchableOpacity>
 
           <View className="flex-row gap-3 w-full">
@@ -116,23 +130,9 @@ export default function AudioRecorder({ visible, onClose, onAudioRecorded }: Pro
               <Text className="text-primary font-spaceBold">Cancelar</Text>
             </TouchableOpacity>
 
-            {recordingTime > 0 && (
+            {recordedUri && (
               <TouchableOpacity
-                onPress={() => {
-                  setRecordingTime(0)
-                  setRecording(null)
-                }}
-                className="flex-1 h-12 bg-terciary border border-secondary rounded-xl justify-center items-center"
-              >
-                <Text className="text-secondary font-spaceBold">Limpar</Text>
-              </TouchableOpacity>
-            )}
-
-            {recordingTime > 0 && !isRecording && (
-              <TouchableOpacity
-                onPress={async () => {
-                  await stopRecording()
-                }}
+                onPress={confirmRecording}
                 className="flex-1 h-12 bg-secondary rounded-xl justify-center items-center"
               >
                 <Text className="text-primary font-spaceBold">Confirmar</Text>

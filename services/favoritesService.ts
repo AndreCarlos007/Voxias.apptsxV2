@@ -2,6 +2,20 @@
 import api from "./api"
 import type { ApiCategory, ApiCard } from "../types"
 
+// Helper function to map API response to ApiCard with full URLs
+function mapCardResponse(cardData: any): ApiCard {
+  const baseUrl = "https://voxia-api.onrender.com"
+  return {
+    id: cardData.id,
+    nome: cardData.nome,
+    imagemUrl: cardData.imagemPath?.startsWith("http") ? cardData.imagemPath : `${baseUrl}${cardData.imagemPath}`,
+    audioUrl: cardData.audioPath?.startsWith("http") ? cardData.audioPath : `${baseUrl}${cardData.audioPath}`,
+    vezes: cardData.vezes || 0,
+    criadoEm: cardData.criadoEm,
+    categoriaId: cardData.categoriaFavoritoId,
+  }
+}
+
 export async function getFavoritesCategories(): Promise<ApiCategory[]> {
   try {
     const data = await api.get("/api/Favorites/categories")
@@ -15,7 +29,9 @@ export async function getFavoritesCategories(): Promise<ApiCategory[]> {
 export async function getFavoritesCategoryCards(categoryId: string): Promise<ApiCard[]> {
   try {
     const data = await api.get(`/api/Favorites/categories/${categoryId}/cards`)
-    return data || []
+    const mappedCards = (data || []).map(mapCardResponse)
+    console.log("[v0] Mapped cards:", mappedCards)
+    return mappedCards
   } catch (error) {
     console.error("Error fetching favorites category cards:", error)
     throw error
@@ -36,29 +52,43 @@ export async function createFavoritesCategory(nome: string): Promise<ApiCategory
 export async function createFavoritesCard(
   nome: string,
   categoriaFavoritoId: string,
-  imagemBlob: Blob,
-  audioBlob?: Blob,
+  imageUri: string,
+  audioUri?: string,
 ): Promise<ApiCard> {
   try {
-    if (!imagemBlob || !(imagemBlob instanceof Blob)) {
-      throw new Error("Imagem inválida")
+    if (!imageUri) {
+      throw new Error("Imagem é obrigatória")
     }
-    if (audioBlob && !(audioBlob instanceof Blob)) {
-      throw new Error("Áudio inválido")
-    }
+
+    console.log("[v0] Creating card with URIs:", {
+      nome,
+      categoriaFavoritoId,
+      imageUri,
+      audioUri,
+    })
 
     const formData = new FormData()
     formData.append("Nome", nome)
     formData.append("CategoriaFavoritoId", categoriaFavoritoId)
-    formData.append("Imagem", imagemBlob, "imagem.jpg")
-    if (audioBlob) {
-      formData.append("Audio", audioBlob, "audio.mp3")
+
+    formData.append("Imagem", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "imagem.jpg",
+    } as any)
+
+    if (audioUri) {
+      const audioType = audioUri.endsWith(".m4a") ? "audio/m4a" : "audio/mpeg"
+      formData.append("Audio", {
+        uri: audioUri,
+        type: audioType,
+        name: audioUri.endsWith(".m4a") ? "audio.m4a" : "audio.mp3",
+      } as any)
     }
 
-    console.log("[v0] Creating card with FormData, nome:", nome)
     const data = await api.postFormData("/api/Favorites/cards", formData)
     console.log("[v0] Card created successfully:", data)
-    return data
+    return mapCardResponse(data)
   } catch (error) {
     console.error("Error creating favorites card:", error)
     throw error
@@ -68,17 +98,35 @@ export async function createFavoritesCard(
 export async function updateFavoritesCard(
   cardId: string,
   nome?: string,
-  imagemBlob?: Blob,
-  audioBlob?: Blob,
+  imageUri?: string,
+  audioUri?: string,
 ): Promise<ApiCard> {
   try {
     const formData = new FormData()
-    if (nome) formData.append("Nome", nome)
-    if (imagemBlob) formData.append("Imagem", imagemBlob, "imagem.jpg")
-    if (audioBlob) formData.append("Audio", audioBlob, "audio.mp3")
+
+    if (nome) {
+      formData.append("Nome", nome)
+    }
+
+    if (imageUri) {
+      formData.append("Imagem", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: "imagem.jpg",
+      } as any)
+    }
+
+    if (audioUri) {
+      const audioType = audioUri.endsWith(".m4a") ? "audio/m4a" : "audio/mpeg"
+      formData.append("Audio", {
+        uri: audioUri,
+        type: audioType,
+        name: audioUri.endsWith(".m4a") ? "audio.m4a" : "audio.mp3",
+      } as any)
+    }
 
     const data = await api.putFormData(`/api/Favorites/cards/${cardId}`, formData)
-    return data
+    return mapCardResponse(data)
   } catch (error) {
     console.error("Error updating favorites card:", error)
     throw error
@@ -88,7 +136,7 @@ export async function updateFavoritesCard(
 export async function getCard(cardId: string): Promise<ApiCard> {
   try {
     const data = await api.get(`/api/Favorites/cards/${cardId}`)
-    return data
+    return mapCardResponse(data)
   } catch (error) {
     console.error("Error fetching card:", error)
     throw error
@@ -124,11 +172,12 @@ export async function updateFavoritesCategory(categoryId: string, nome: string):
   }
 }
 
-export async function updateCardPlayCount(cardId: string, playCount: number): Promise<void> {
+export async function incrementCardClick(cardId: string): Promise<void> {
   try {
-    await api.put(`/api/Favorites/cards/${cardId}/play-count`, { playCount })
+    await api.post(`/api/Clicks/card/${cardId}`, {})
+    console.log("[v0] Card click registered:", cardId)
   } catch (error) {
-    console.error("Error updating play count:", error)
+    console.error("Error registering card click:", error)
     throw error
   }
 }

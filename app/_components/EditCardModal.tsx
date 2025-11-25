@@ -27,16 +27,16 @@ type Props = {
 
 export default function EditCardModal({ visible, card, onClose, onSuccess }: Props) {
   const [cardName, setCardName] = useState("")
-  const [imageBlob, setImageBlob] = useState<Blob | null>(null)
   const [imageUri, setImageUri] = useState("")
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioUri, setAudioUri] = useState("")
   const [audioName, setAudioName] = useState("")
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (card && visible) {
-      setCardName(card.name)
-      setImageUri(card.imageUrl)
+      setCardName(card.nome)
+      setImageUri(card.imagemUrl)
+      setAudioUri(card.audioUrl || "")
       setAudioName(card.audioUrl ? "current-audio" : "")
     }
   }, [card, visible])
@@ -50,7 +50,7 @@ export default function EditCardModal({ visible, card, onClose, onSuccess }: Pro
 
       setLoading(true)
 
-      await updateFavoritesCard(card!.id, cardName, imageBlob || undefined, audioBlob || undefined)
+      await updateFavoritesCard(card!.id, cardName, imageUri || undefined, audioUri || undefined)
 
       Alert.alert("Sucesso", "Card atualizado!")
       onSuccess()
@@ -63,7 +63,7 @@ export default function EditCardModal({ visible, card, onClose, onSuccess }: Pro
   }
 
   const handleDelete = () => {
-    Alert.alert("Deletar Card", `Tem certeza que deseja deletar "${card?.name}"?`, [
+    Alert.alert("Deletar Card", `Tem certeza que deseja deletar "${card?.nome}"?`, [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Deletar",
@@ -117,8 +117,7 @@ export default function EditCardModal({ visible, card, onClose, onSuccess }: Pro
               <View>
                 <Text className="text-neutro font-spaceBold mb-2">Imagem</Text>
                 <ImagePickerButton
-                  onImageSelected={(blob, uri) => {
-                    setImageBlob(blob)
+                  onImageSelected={(uri) => {
                     setImageUri(uri)
                   }}
                   selectedUri={imageUri}
@@ -134,9 +133,9 @@ export default function EditCardModal({ visible, card, onClose, onSuccess }: Pro
               <View>
                 <Text className="text-neutro font-spaceBold mb-2">Áudio (Opcional)</Text>
                 <AudioPickerButton
-                  onAudioSelected={(blob, name) => {
-                    setAudioBlob(blob)
-                    setAudioName(name)
+                  onAudioSelected={(uri) => {
+                    setAudioUri(uri)
+                    setAudioName(uri.includes("recording") ? "recording" : "selected")
                   }}
                   selectedName={audioName}
                 />

@@ -7,7 +7,7 @@ import * as MediaLibrary from "expo-media-library"
 import AudioRecorder from "./AudioRecorder"
 
 type Props = {
-  onAudioSelected: (blob: Blob, name?: string) => void
+  onAudioSelected: (uri: string, name?: string) => void
   selectedName?: string
 }
 
@@ -36,10 +36,7 @@ export default function AudioPickerButton({ onAudioSelected, selectedName }: Pro
       }
 
       const audioAsset = media.assets[0]
-      const response = await fetch(audioAsset.uri)
-      const blob = await response.blob()
-
-      onAudioSelected(blob, audioAsset.filename || "áudio")
+      onAudioSelected(audioAsset.uri, audioAsset.filename || "áudio")
     } catch (error) {
       console.error("Error picking audio:", error)
       Alert.alert("Erro", "Falha ao selecionar arquivo de áudio")
@@ -78,8 +75,8 @@ export default function AudioPickerButton({ onAudioSelected, selectedName }: Pro
       <AudioRecorder
         visible={recordingModalVisible}
         onClose={() => setRecordingModalVisible(false)}
-        onAudioRecorded={(blob) => {
-          onAudioSelected(blob, "recording")
+        onAudioRecorded={(uri) => {
+          onAudioSelected(uri, "recording")
           setRecordingModalVisible(false)
         }}
       />

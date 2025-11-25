@@ -6,7 +6,7 @@ import * as ImagePicker from "expo-image-picker"
 import { useState } from "react"
 
 type Props = {
-  onImageSelected: (blob: Blob, uri: string) => void
+  onImageSelected: (uri: string) => void
   selectedUri?: string
 }
 
@@ -17,7 +17,6 @@ export default function ImagePickerButton({ onImageSelected, selectedUri }: Prop
     try {
       setLoading(true)
 
-      // Request permission
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== "granted") {
         Alert.alert("Permissão negada", "Permitir acesso à galeria para selecionar imagens")
@@ -35,11 +34,7 @@ export default function ImagePickerButton({ onImageSelected, selectedUri }: Prop
         const asset = result.assets[0]
         console.log("[v0] Image selected:", asset.uri)
 
-        // Convert to blob
-        const response = await fetch(asset.uri)
-        const blob = await response.blob()
-
-        onImageSelected(blob, asset.uri)
+        onImageSelected(asset.uri)
       }
     } catch (error) {
       console.error("Error picking image:", error)
